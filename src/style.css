@@ -1,0 +1,1670 @@
+:root {
+  --bg-dark: #0a0e14;
+  --bg-panel: #141a24;
+  --accent-cyan: #00c8ff;
+  --accent-cyan-bright: #4dd8ff;
+  --text-primary: #e8f4ff;
+  --text-dim: #7fb8d9;
+  --steel-blue: #2a3a4a;
+  --steel-blue-light: #3d5a6e;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-dark);
+  font-family: 'Courier New', 'Consolas', 'SF Mono', 'Menlo', monospace;
+  color: var(--text-primary);
+}
+
+/* Subtle grid overlay to hint at the cold corridor aesthetic */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image:
+    linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+#app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#hud {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+  color: var(--text-primary);
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.6);
+}
+
+#hud-score {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 14px;
+  background: rgba(20, 26, 36, 0.75);
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 12px rgba(0, 200, 255, 0.15),
+    inset 0 0 8px rgba(0, 200, 255, 0.05);
+  position: relative;
+}
+
+#hud-score .label {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+#score-value {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.8),
+    0 0 16px rgba(0, 200, 255, 0.4);
+}
+
+#loading-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  color: var(--text-dim);
+  font-size: 18px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 12px rgba(0, 200, 255, 0.8),
+    0 0 24px rgba(0, 200, 255, 0.4);
+  animation: pulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ==========================================
+   UI Overlay Styles (Main Menu, Plane Select, How To Play)
+   ========================================== */
+
+/* Full-screen overlay container */
+.ui-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  background: rgba(10, 14, 20, 0.85);
+  animation: overlayFadeIn 0.3s ease-out;
+  pointer-events: auto;
+}
+
+/* Subtle scanline effect overlay */
+.ui-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 200, 255, 0.02) 2px,
+    rgba(0, 200, 255, 0.02) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Fade-in animation for overlays */
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==========================================
+   Main Menu Styles
+   ========================================== */
+
+/* Transparent menu backdrop so the holographic 3D city is visible behind it */
+#main-menu.ui-overlay {
+  background: rgba(10, 14, 20, 0.35);
+}
+
+.menu-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.menu-title {
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  font-family: 'Impact', 'Arial Black', 'Courier New', monospace;
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.8),
+    0 0 16px rgba(0, 200, 255, 0.5),
+    0 0 32px rgba(0, 200, 255, 0.3),
+    0 2px 0 rgba(0, 0, 0, 0.8),
+    0 4px 0 rgba(0, 0, 0, 0.5);
+  margin: 0;
+  animation: titlePulse 3s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+  0%,
+  100% {
+    text-shadow:
+      0 0 8px rgba(0, 200, 255, 0.8),
+      0 0 16px rgba(0, 200, 255, 0.5),
+      0 0 32px rgba(0, 200, 255, 0.3),
+      0 2px 0 rgba(0, 0, 0, 0.8),
+      0 4px 0 rgba(0, 0, 0, 0.5);
+  }
+  50% {
+    text-shadow:
+      0 0 12px rgba(0, 200, 255, 1),
+      0 0 24px rgba(0, 200, 255, 0.7),
+      0 0 48px rgba(0, 200, 255, 0.4),
+      0 2px 0 rgba(0, 0, 0, 0.8),
+      0 4px 0 rgba(0, 0, 0, 0.5);
+  }
+}
+
+.menu-subtitle {
+  font-size: 14px;
+  letter-spacing: 6px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.menu-button {
+  background: rgba(20, 26, 36, 0.8);
+  border: 1px solid rgba(0, 200, 255, 0.4);
+  color: var(--text-primary);
+  font-family: 'Courier New', 'Consolas', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  padding: 14px 48px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
+}
+
+.menu-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 200, 255, 0.1),
+    transparent
+  );
+  transition: left 0.3s ease;
+}
+
+.menu-button:hover {
+  border-color: var(--accent-cyan-bright);
+  background: rgba(0, 200, 255, 0.1);
+  box-shadow:
+    0 0 16px rgba(0, 200, 255, 0.4),
+    inset 0 0 16px rgba(0, 200, 255, 0.1);
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.8),
+    0 0 16px rgba(0, 200, 255, 0.4);
+}
+
+.menu-button:hover::before {
+  left: 100%;
+}
+
+.menu-button:active {
+  transform: scale(0.98);
+}
+
+/* ==========================================
+   Plane Selection Styles
+   ========================================== */
+
+/* Semi-transparent gradient that lets 3D fighters show through */
+#plane-select.ui-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 14, 20, 0) 0%,
+    rgba(10, 14, 20, 0.3) 30%,
+    rgba(10, 14, 20, 0.85) 70%,
+    rgba(10, 14, 20, 0.95) 100%
+  );
+}
+
+.plane-select-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-bottom: 48px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  width: 100%;
+}
+
+.plane-select-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.8),
+    0 0 16px rgba(0, 200, 255, 0.4);
+}
+
+.plane-name {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #ffffff;
+  margin: 0;
+  text-shadow:
+    0 0 12px rgba(0, 200, 255, 0.8),
+    0 0 24px rgba(0, 200, 255, 0.4);
+}
+
+.plane-description {
+  font-size: 14px;
+  color: var(--text-dim);
+  max-width: 480px;
+  margin: 0;
+  line-height: 1.6;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.2);
+}
+
+.deploy-button {
+  font-size: 20px;
+  padding: 16px 64px;
+  border-color: var(--accent-cyan);
+  background: rgba(0, 200, 255, 0.15);
+  box-shadow:
+    0 0 20px rgba(0, 200, 255, 0.3),
+    inset 0 0 20px rgba(0, 200, 255, 0.1);
+  margin-top: 8px;
+}
+
+.deploy-button:hover {
+  background: rgba(0, 200, 255, 0.25);
+  box-shadow:
+    0 0 32px rgba(0, 200, 255, 0.5),
+    inset 0 0 32px rgba(0, 200, 255, 0.2);
+}
+
+.plane-select-hints {
+  font-size: 12px;
+  color: rgba(127, 184, 217, 0.6);
+  letter-spacing: 2px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* ==========================================
+   How To Play Styles
+   ========================================== */
+
+.how-to-play-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.how-to-play-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.8),
+    0 0 16px rgba(0, 200, 255, 0.4);
+}
+
+.controls-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.controls-list li {
+  font-size: 16px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  padding: 8px 16px;
+  border-left: 3px solid var(--accent-cyan);
+  background: rgba(20, 26, 36, 0.5);
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.controls-list li:hover {
+  border-left-color: var(--accent-cyan-bright);
+  background: rgba(0, 200, 255, 0.1);
+  color: var(--text-primary);
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .menu-title {
+    font-size: 36px;
+    letter-spacing: 4px;
+  }
+
+  .menu-button {
+    padding: 12px 32px;
+    font-size: 14px;
+  }
+
+  .plane-name {
+    font-size: 28px;
+  }
+
+  .plane-description {
+    font-size: 12px;
+    max-width: 320px;
+  }
+
+  .deploy-button {
+    padding: 14px 48px;
+    font-size: 16px;
+  }
+}
+
+/* ==========================================
+   Power Indicator Styles
+   ========================================== */
+
+#power-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: rgba(20, 26, 36, 0.75);
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 12px rgba(0, 200, 255, 0.15),
+    inset 0 0 8px rgba(0, 200, 255, 0.05);
+  position: relative;
+}
+
+#power-indicator .label {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.power-segments {
+  display: flex;
+  gap: 4px;
+}
+
+.power-segment {
+  width: 18px;
+  height: 8px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.power-segment.filled {
+  background: var(--accent-cyan);
+  box-shadow:
+    0 0 6px rgba(0, 200, 255, 0.8),
+    0 0 12px rgba(0, 200, 255, 0.4);
+}
+
+.power-segment.empty {
+  background: rgba(127, 184, 217, 0.15);
+  border: 1px solid rgba(127, 184, 217, 0.2);
+}
+
+/* ==========================================
+   Wingman Indicator Styles
+   ========================================== */
+
+#wingman-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: rgba(20, 26, 36, 0.75);
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 12px rgba(0, 200, 255, 0.15),
+    inset 0 0 8px rgba(0, 200, 255, 0.05);
+  position: relative;
+}
+
+#wingman-indicator .label {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.wingman-slots {
+  display: flex;
+  gap: 4px;
+}
+
+.wingman-slot {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: rgba(127, 184, 217, 0.15);
+  border: 1px solid rgba(127, 184, 217, 0.2);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.wingman-slot.filled {
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+  animation: wingmanSlotPulse 2s ease-in-out infinite;
+}
+
+.wingman-slot.filled::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+}
+
+.wingman-slot.filled:hover {
+  transform: scale(1.1);
+}
+
+@keyframes wingmanSlotPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.wingman-slot.filled:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.wingman-slot.filled:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.wingman-slot.filled:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.wingman-slot.filled:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+.wingman-slot.filled:nth-child(5) {
+  animation-delay: 0.8s;
+}
+
+/* ==========================================
+   Floating Text Styles
+   ========================================== */
+
+.floating-text {
+  position: fixed;
+  z-index: 50;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow:
+    0 0 8px rgba(255, 215, 0, 0.8),
+    0 0 16px rgba(255, 215, 0, 0.4);
+  pointer-events: none;
+  user-select: none;
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 1.5s ease-out, opacity 1.5s ease-out;
+  font-family: 'Courier New', 'Consolas', monospace;
+  letter-spacing: 2px;
+}
+
+/* ==========================================
+   Score Flash Animation
+   ========================================== */
+
+.score-flash {
+  animation: scoreFlash 0.15s ease-out;
+}
+
+@keyframes scoreFlash {
+  0% {
+    background: rgba(0, 200, 255, 0.4);
+    box-shadow: 0 0 20px rgba(0, 200, 255, 0.5);
+  }
+  100% {
+    background: rgba(20, 26, 36, 0.75);
+    box-shadow: 0 0 12px rgba(0, 200, 255, 0.15);
+  }
+}
+
+/* ==========================================
+   Boss Warning Banner Styles
+   ========================================== */
+
+#boss-warning-banner {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 48px;
+  background: rgba(20, 10, 10, 0.9);
+  border: 3px solid #ff0000;
+  border-radius: 4px;
+  box-shadow:
+    0 0 24px rgba(255, 0, 0, 0.5),
+    0 0 48px rgba(255, 0, 0, 0.25),
+    inset 0 0 24px rgba(255, 0, 0, 0.15);
+  animation:
+    bannerSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    sirenBorderFlash 1.2s linear infinite,
+    alarmGlowPulse 0.8s ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+  text-align: center;
+}
+
+/* Slide-in from top animation */
+@keyframes bannerSlideIn {
+  0% {
+    transform: translateX(-50%) translateY(-120px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(-50%) translateY(10px);
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+  100% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Accelerating siren border flash — the border flashes faster and faster */
+@keyframes sirenBorderFlash {
+  0%, 100% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  10% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  20% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  28% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  34% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  40% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  45% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  49% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  52% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  55% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  58% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  60% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  62% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  64% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  66% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  68% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  70% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  72% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  74% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  76% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  78% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  80% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  82% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  84% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  86% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  88% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  90% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  92% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  94% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+  96% {
+    border-color: rgba(255, 0, 0, 0.2);
+    border-width: 1px;
+  }
+  98% {
+    border-color: #ff0000;
+    border-width: 3px;
+  }
+}
+
+/* Pulsing red glow that intensifies and fades */
+@keyframes alarmGlowPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 24px rgba(255, 0, 0, 0.5),
+      0 0 48px rgba(255, 0, 0, 0.25),
+      inset 0 0 24px rgba(255, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 48px rgba(255, 0, 0, 0.9),
+      0 0 96px rgba(255, 0, 0, 0.5),
+      inset 0 0 48px rgba(255, 0, 0, 0.3);
+  }
+}
+
+/* Slide-out animation when dismissed */
+#boss-warning-banner.fade-out {
+  animation: bannerSlideOut 0.5s ease-in forwards;
+}
+
+@keyframes bannerSlideOut {
+  0% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-120px);
+    opacity: 0;
+  }
+}
+
+#boss-warning-banner.fade-out.hidden {
+  display: none;
+}
+
+#boss-warning-banner .warning-title {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: #ff0000;
+  text-shadow:
+    0 0 8px rgba(255, 0, 0, 0.9),
+    0 0 16px rgba(255, 0, 0, 0.5),
+    0 0 32px rgba(255, 0, 0, 0.3);
+  margin: 0;
+  animation: titleAlarmPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes titleAlarmPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 8px rgba(255, 0, 0, 0.9),
+      0 0 16px rgba(255, 0, 0, 0.5),
+      0 0 32px rgba(255, 0, 0, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 16px rgba(255, 0, 0, 1),
+      0 0 32px rgba(255, 0, 0, 0.8),
+      0 0 64px rgba(255, 0, 0, 0.5);
+  }
+}
+
+#boss-warning-banner .warning-subtitle {
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(255, 100, 100, 0.8);
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+  margin: 0;
+}
+
+/* ==========================================
+   Boss Health Bar Styles
+   ========================================== */
+
+#boss-health-bar {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.boss-health-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.8),
+    0 0 16px rgba(0, 200, 255, 0.4);
+}
+
+.boss-health-bar-container {
+  width: 400px;
+  height: 12px;
+  background: rgba(20, 26, 36, 0.85);
+  border: 1px solid rgba(0, 200, 255, 0.4);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow:
+    0 0 12px rgba(0, 200, 255, 0.2),
+    inset 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+.boss-health-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #0066ff 0%,
+    #00c8ff 50%,
+    #4dd8ff 100%
+  );
+  transition: width 0.2s ease;
+  box-shadow:
+    0 0 8px rgba(0, 200, 255, 0.8),
+    0 0 16px rgba(0, 200, 255, 0.4);
+}
+
+/* Responsive adjustments for boss health bar */
+@media (max-width: 768px) {
+  .boss-health-bar-container {
+    width: 280px;
+  }
+
+  #boss-warning-banner {
+    padding: 12px 24px;
+  }
+
+  #boss-warning-banner .warning-title {
+    font-size: 16px;
+    letter-spacing: 4px;
+  }
+}
+
+/* ==========================================
+   Level Clear Settlement Screen Styles
+   ========================================== */
+
+/* Full-screen overlay with semi-transparent dark background and scanline effect */
+#level-clear.ui-overlay {
+  background: rgba(10, 14, 20, 0.92);
+}
+
+/* Scanline effect for the level clear screen */
+#level-clear.ui-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 200, 255, 0.03) 3px,
+    rgba(0, 200, 255, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Content container — flex column, centered, with gap */
+.level-clear-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 40px 60px;
+  background: rgba(20, 26, 36, 0.6);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-left: 4px solid var(--accent-cyan);
+  border-right: 4px solid var(--accent-cyan);
+  border-radius: 4px;
+  box-shadow:
+    0 0 32px rgba(0, 200, 255, 0.15),
+    inset 0 0 32px rgba(0, 200, 255, 0.05);
+}
+
+/* MISSION COMPLETE header — large cyan text with glow */
+.level-clear-header {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  margin: 0;
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.9),
+    0 0 16px rgba(0, 200, 255, 0.6),
+    0 0 32px rgba(0, 200, 255, 0.4),
+    0 2px 0 rgba(0, 0, 0, 0.8);
+  animation: levelClearHeaderPulse 2s ease-in-out infinite;
+}
+
+@keyframes levelClearHeaderPulse {
+  0%,
+  100% {
+    text-shadow:
+      0 0 8px rgba(0, 200, 255, 0.9),
+      0 0 16px rgba(0, 200, 255, 0.6),
+      0 0 32px rgba(0, 200, 255, 0.4),
+      0 2px 0 rgba(0, 0, 0, 0.8);
+  }
+  50% {
+    text-shadow:
+      0 0 12px rgba(0, 200, 255, 1),
+      0 0 24px rgba(0, 200, 255, 0.8),
+      0 0 48px rgba(0, 200, 255, 0.5),
+      0 2px 0 rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Level name display — white/dim */
+.level-clear-level-name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+}
+
+/* Score breakdown container — bordered panel */
+.level-clear-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 360px;
+  padding: 20px 24px;
+  background: rgba(10, 14, 20, 0.7);
+  border: 1px solid rgba(0, 200, 255, 0.25);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 16px rgba(0, 200, 255, 0.05),
+    0 0 12px rgba(0, 200, 255, 0.1);
+}
+
+/* Score row — flex with space-between */
+.level-clear-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 4px 0;
+}
+
+/* Row label — dim cyan text */
+.level-clear-row-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-shadow: 0 0 4px rgba(0, 200, 255, 0.2);
+}
+
+/* Row value — bright white with tabular numbers */
+.level-clear-row-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
+}
+
+/* Divider line between breakdown rows and total */
+.level-clear-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 200, 255, 0.5),
+    transparent
+  );
+  margin: 8px 0;
+}
+
+/* Total score row — brighter styling */
+.level-clear-row.total {
+  padding-top: 8px;
+}
+
+.level-clear-row.total .level-clear-row-label {
+  font-size: 15px;
+  color: var(--accent-cyan);
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.6),
+    0 0 16px rgba(0, 200, 255, 0.3);
+}
+
+/* Total score value — gold/cyan glowing */
+.total-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow:
+    0 0 8px rgba(255, 215, 0, 0.8),
+    0 0 16px rgba(255, 215, 0, 0.5),
+    0 0 32px rgba(0, 200, 255, 0.3);
+}
+
+/* NEXT MISSION button — cyan border with hover effect */
+.level-clear-button {
+  font-size: 18px;
+  padding: 16px 56px;
+  border-color: var(--accent-cyan);
+  background: rgba(0, 200, 255, 0.15);
+  box-shadow:
+    0 0 20px rgba(0, 200, 255, 0.3),
+    inset 0 0 20px rgba(0, 200, 255, 0.1);
+  margin-top: 8px;
+}
+
+.level-clear-button:hover {
+  background: rgba(0, 200, 255, 0.25);
+  box-shadow:
+    0 0 32px rgba(0, 200, 255, 0.5),
+    inset 0 0 32px rgba(0, 200, 255, 0.2);
+  transform: scale(1.02);
+}
+
+.level-clear-button:active {
+  transform: scale(0.98);
+}
+
+/* Responsive adjustments for level clear screen */
+@media (max-width: 768px) {
+  .level-clear-content {
+    padding: 24px 20px;
+    gap: 16px;
+  }
+
+  .level-clear-header {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+
+  .level-clear-breakdown {
+    min-width: 260px;
+    padding: 16px;
+  }
+
+  .level-clear-row-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  .level-clear-row-value {
+    font-size: 14px;
+  }
+
+  .total-value {
+    font-size: 20px;
+  }
+
+  .level-clear-button {
+    font-size: 16px;
+    padding: 14px 40px;
+  }
+}
+
+/* ==========================================
+   Mission Failed Screen Styles
+   ========================================== */
+
+/* Full-screen overlay with dark background and red vignette */
+#mission-failed.ui-overlay {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(10, 8, 10, 0.92) 0%,
+    rgba(10, 8, 10, 0.95) 50%,
+    rgba(30, 5, 5, 0.98) 100%
+  );
+  animation: missionFailedVignettePulse 3s ease-in-out infinite;
+}
+
+/* Scanline effect with red tint */
+#mission-failed.ui-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    transparent 0px,
+    transparent 3px,
+    rgba(255, 0, 0, 0.03) 3px,
+    rgba(255, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Content container — flex column, centered, with red-tinted panel */
+.mission-failed-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 48px 64px;
+  background: rgba(30, 10, 10, 0.6);
+  border: 1px solid rgba(255, 0, 0, 0.35);
+  border-left: 4px solid #ff0000;
+  border-right: 4px solid #ff0000;
+  border-radius: 4px;
+  box-shadow:
+    0 0 32px rgba(255, 0, 0, 0.15),
+    inset 0 0 32px rgba(255, 0, 0, 0.05);
+}
+
+/* MISSION FAILED header — large red text with pulsing glow */
+.mission-failed-header {
+  font-size: 44px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: #ff0000;
+  margin: 0;
+  text-shadow:
+    0 0 8px rgba(255, 0, 0, 0.9),
+    0 0 16px rgba(255, 0, 0, 0.6),
+    0 0 32px rgba(255, 0, 0, 0.4),
+    0 2px 0 rgba(0, 0, 0, 0.8);
+  animation: missionFailedHeaderPulse 2s ease-in-out infinite;
+}
+
+/* Level name display — dim red/white */
+.mission-failed-level-name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: rgba(255, 180, 180, 0.8);
+  margin: 0;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
+/* SCORE ACHIEVED label — dim red */
+.mission-failed-score-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(255, 100, 100, 0.7);
+  margin: 0;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+}
+
+/* Score value — large red glowing */
+.mission-failed-score {
+  font-size: 36px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ff4444;
+  margin: 0;
+  text-shadow:
+    0 0 8px rgba(255, 0, 0, 0.8),
+    0 0 16px rgba(255, 0, 0, 0.5),
+    0 0 32px rgba(255, 0, 0, 0.3);
+}
+
+/* Button container — flex row */
+.mission-failed-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+/* Mission failed buttons — red-tinted with red border */
+.mission-failed-button {
+  border-color: rgba(255, 0, 0, 0.5);
+  background: rgba(60, 10, 10, 0.6);
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+}
+
+.mission-failed-button:hover {
+  border-color: #ff0000;
+  background: rgba(255, 0, 0, 0.15);
+  box-shadow:
+    0 0 16px rgba(255, 0, 0, 0.4),
+    inset 0 0 16px rgba(255, 0, 0, 0.1);
+  text-shadow:
+    0 0 8px rgba(255, 0, 0, 0.8),
+    0 0 16px rgba(255, 0, 0, 0.4);
+}
+
+.mission-failed-button:active {
+  transform: scale(0.98);
+}
+
+/* Pulsing red glow animation for the MISSION FAILED header */
+@keyframes missionFailedHeaderPulse {
+  0%,
+  100% {
+    text-shadow:
+      0 0 8px rgba(255, 0, 0, 0.9),
+      0 0 16px rgba(255, 0, 0, 0.6),
+      0 0 32px rgba(255, 0, 0, 0.4),
+      0 2px 0 rgba(0, 0, 0, 0.8);
+  }
+  50% {
+    text-shadow:
+      0 0 12px rgba(255, 0, 0, 1),
+      0 0 24px rgba(255, 0, 0, 0.8),
+      0 0 48px rgba(255, 0, 0, 0.5),
+      0 2px 0 rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Subtle pulsing red vignette animation for the overlay background */
+@keyframes missionFailedVignettePulse {
+  0%,
+  100% {
+    background: radial-gradient(
+      ellipse at center,
+      rgba(10, 8, 10, 0.92) 0%,
+      rgba(10, 8, 10, 0.95) 50%,
+      rgba(30, 5, 5, 0.98) 100%
+    );
+  }
+  50% {
+    background: radial-gradient(
+      ellipse at center,
+      rgba(10, 8, 10, 0.90) 0%,
+      rgba(12, 8, 10, 0.93) 50%,
+      rgba(40, 5, 5, 0.98) 100%
+    );
+  }
+}
+
+/* Responsive adjustments for mission failed screen */
+@media (max-width: 768px) {
+  .mission-failed-content {
+    padding: 32px 20px;
+    gap: 16px;
+  }
+
+  .mission-failed-header {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+
+  .mission-failed-level-name {
+    font-size: 14px;
+    letter-spacing: 4px;
+  }
+
+  .mission-failed-score {
+    font-size: 28px;
+  }
+
+  .mission-failed-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mission-failed-button {
+    font-size: 14px;
+    padding: 12px 32px;
+  }
+}
+
+/* ==========================================
+   Pause Overlay Styles
+   ========================================== */
+
+/* Dark translucent overlay with blurred game view */
+#pause-overlay.ui-overlay {
+  background: rgba(5, 8, 12, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Content container — flex column, centered, with cyan-bordered panel */
+.pause-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 48px 64px;
+  background: rgba(20, 26, 36, 0.85);
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  border-left: 4px solid var(--accent-cyan);
+  border-right: 4px solid var(--accent-cyan);
+  border-radius: 4px;
+  box-shadow:
+    0 0 32px rgba(0, 200, 255, 0.15),
+    inset 0 0 32px rgba(0, 200, 255, 0.05);
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+/* MISSION PAUSED header — large cyan text with pulsing glow */
+.pause-header {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  margin: 0;
+  text-shadow:
+    0 0 8px rgba(0, 200, 255, 0.9),
+    0 0 16px rgba(0, 200, 255, 0.6),
+    0 0 32px rgba(0, 200, 255, 0.4),
+    0 2px 0 rgba(0, 0, 0, 0.8);
+  animation: pauseHeaderPulse 2s ease-in-out infinite;
+}
+
+/* Pulsing cyan glow animation for the pause header */
+@keyframes pauseHeaderPulse {
+  0%,
+  100% {
+    text-shadow:
+      0 0 8px rgba(0, 200, 255, 0.9),
+      0 0 16px rgba(0, 200, 255, 0.6),
+      0 0 32px rgba(0, 200, 255, 0.4),
+      0 2px 0 rgba(0, 0, 0, 0.8);
+  }
+  50% {
+    text-shadow:
+      0 0 12px rgba(0, 200, 255, 1),
+      0 0 24px rgba(0, 200, 255, 0.8),
+      0 0 48px rgba(0, 200, 255, 0.5),
+      0 2px 0 rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Subtitle — dim cyan, uppercase */
+.pause-subtitle {
+  font-size: 13px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
+}
+
+/* Button container — flex column, centered */
+.pause-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  margin-top: 12px;
+  min-width: 320px;
+}
+
+/* Pause buttons — full width, centered text */
+.pause-button {
+  width: 100%;
+  text-align: center;
+  padding: 14px 40px;
+  font-size: 15px;
+  letter-spacing: 4px;
+}
+
+/* ABANDON MISSION button — red-tinted variant */
+.pause-button.abandon {
+  border-color: rgba(255, 60, 60, 0.5);
+  background: rgba(60, 10, 10, 0.5);
+  text-shadow: 0 0 8px rgba(255, 60, 60, 0.3);
+}
+
+.pause-button.abandon:hover {
+  border-color: #ff4444;
+  background: rgba(255, 60, 60, 0.15);
+  box-shadow:
+    0 0 16px rgba(255, 60, 60, 0.4),
+    inset 0 0 16px rgba(255, 60, 60, 0.1);
+  text-shadow:
+    0 0 8px rgba(255, 60, 60, 0.8),
+    0 0 16px rgba(255, 60, 60, 0.4);
+}
+
+/* Responsive adjustments for pause overlay */
+@media (max-width: 768px) {
+  .pause-content {
+    padding: 32px 24px;
+    gap: 16px;
+  }
+
+  .pause-header {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+
+  .pause-subtitle {
+    font-size: 11px;
+    letter-spacing: 3px;
+  }
+
+  .pause-buttons {
+    min-width: 260px;
+    gap: 12px;
+  }
+
+  .pause-button {
+    padding: 12px 32px;
+    font-size: 13px;
+    letter-spacing: 3px;
+  }
+}
+
+/* ==========================================
+   Health Indicator Styles
+   ========================================== */
+
+/* Health indicator panel — matches power/wingman indicator styling */
+#health-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: rgba(20, 26, 36, 0.75);
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 12px rgba(0, 200, 255, 0.15),
+    inset 0 0 8px rgba(0, 200, 255, 0.05);
+  position: relative;
+}
+
+/* Label — dim cyan, uppercase */
+#health-indicator .label {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+/* Shield segments container — flex row */
+.shield-segments {
+  display: flex;
+  gap: 4px;
+}
+
+/* Individual shield segment — angular shield shape */
+.shield-segment {
+  width: 22px;
+  height: 14px;
+  clip-path: polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%);
+  background: rgba(127, 184, 217, 0.12);
+  border: 1px solid rgba(127, 184, 217, 0.25);
+  transition: all 0.25s ease;
+}
+
+/* Filled segment — cyan gradient with glow and pulse */
+.shield-segment.filled {
+  background: linear-gradient(180deg, #00c8ff, #0066ff);
+  border-color: var(--accent-cyan-bright);
+  box-shadow:
+    0 0 8px rgba(0, 200, 255, 0.7),
+    0 0 16px rgba(0, 200, 255, 0.35);
+  animation: shieldSegmentPulse 2s ease-in-out infinite;
+}
+
+/* Empty segment — dimmed state */
+.shield-segment.empty {
+  background: rgba(127, 184, 217, 0.12);
+  border-color: rgba(127, 184, 217, 0.25);
+  box-shadow: none;
+}
+
+/* Subtle pulse animation for filled shield segments */
+@keyframes shieldSegmentPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* Stagger the pulse animation across segments */
+.shield-segment.filled:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.shield-segment.filled:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.shield-segment.filled:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* ==========================================
+   HUD Cohesion Polish — Corner Accents
+   ========================================== */
+
+/* Cyan L-shaped corner bracket on each HUD panel */
+#hud-score::after,
+#power-indicator::after,
+#wingman-indicator::after,
+#health-indicator::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--accent-cyan-bright);
+  border-right: 2px solid var(--accent-cyan-bright);
+  opacity: 0.7;
+  pointer-events: none;
+}
