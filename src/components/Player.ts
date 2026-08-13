@@ -487,10 +487,12 @@ export class Player {
 
   /**
    * Resets the fire cooldown to the fire rate.
+   * TITAN fires faster than the other fighters (shorter cooldown).
    * Called after firing a shot.
    */
   public resetFireCooldown(): void {
-    this.fireCooldown = this.fireRate;
+    const rateMultiplier = this.planeType === 'titan' ? 0.6 : 1;
+    this.fireCooldown = this.fireRate * rateMultiplier;
   }
 
   /**

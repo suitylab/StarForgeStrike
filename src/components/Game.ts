@@ -1772,8 +1772,10 @@ export class Game {
     const playerX = this.player.mesh.position.x;
 
     // Base bullet damage per plane type.
-    // TITAN (third fighter) deals 1.5x the initial damage of the other fighters.
-    const baseDamage = this.planeType === 'titan' ? 1.5 : 1;
+    // TITAN (third fighter): base damage 5, scaling linearly with the power
+    // level (5, 10, 15, 20, 25 across power levels 1-5 → +5 per POWER).
+    // Other fighters: base damage 1 (+1 per POWER).
+    const baseDamage = this.planeType === 'titan' ? 5 : 1;
     // Getting POWER pickups scales damage linearly with the power level
     const bulletDamage = baseDamage * powerLevel;
 
