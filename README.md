@@ -35,7 +35,19 @@ npm run build
 
 # Preview the production build
 npm run preview
+
+# Deploy to Cloudflare Pages (via Wrangler)
+npm run deploy
 ```
+
+### Deployment
+
+This project is configured for **Cloudflare Pages** via [Wrangler](https://developers.cloudflare.com/workers/wrangler/).
+
+1. Run `npx wrangler login` to authenticate (one-time).
+2. Run `npm run deploy` (or `npm run build` first to build locally).
+
+Configuration lives in [`wrangler.json`](./wrangler.json) (`pages_build_output_dir: "dist"`), with the [`@cloudflare/vite-plugin`](https://developers.cloudflare.com/vite/) wired into [`vite.config.ts`](./vite.config.ts).
 
 ## Controls
 
