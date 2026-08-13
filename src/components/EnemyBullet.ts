@@ -130,6 +130,9 @@ export class EnemyBullet {
    */
   public spawn(position: THREE.Vector3 | { x: number; y: number; z: number }, speed: number): void {
     this.mesh.position.set(position.x, position.y, position.z);
+    // Reset scale so recycled bullets (e.g. elongated lasers from fireLaser)
+    // don't retain their custom size for later spawns.
+    this.mesh.scale.set(1, 1, 1);
     this.speed = speed;
     // Enemy bullets travel downward: -Y direction
     this.velocity.set(0, -speed, 0);

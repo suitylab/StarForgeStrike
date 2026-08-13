@@ -268,7 +268,7 @@ export class HomingMissile {
 /**
  * Reaper — large angular fighter with glowing red core.
  * Fires spiral pattern of 6 bullets rotating outward every 2.5s.
- * 8 HP. Slow sine drift movement.
+ * 32 HP. Slow sine drift movement.
  */
 export class Reaper extends Enemy {
   /** Angle offset for the spiral pattern (increments each fire) */
@@ -351,7 +351,7 @@ export class Reaper extends Enemy {
 /**
  * Warden — heavy armored unit with shield plating.
  * Fires 5-bullet spread every 2.0s plus aimed laser every 5s.
- * 12 HP. Slow straight drift movement.
+ * 48 HP. Slow straight drift movement.
  */
 export class Warden extends Enemy {
   /** Time remaining before the next aimed laser shot (seconds) */
@@ -469,7 +469,7 @@ export class Warden extends Enemy {
 /**
  * Harbinger — twin-hulled bomber with missile pods.
  * Launches 3 homing missiles every 3.5s that track the player.
- * 10 HP. Slow sine drift movement.
+ * 40 HP. Slow sine drift movement.
  */
 export class Harbinger extends Enemy {
   /** Array of homing missiles managed by this Harbinger */
@@ -598,7 +598,7 @@ export class Harbinger extends Enemy {
 /**
  * Overlord — command ship with rotating turret ring.
  * Fires alternating ring bursts (8 bullets) and aimed streams (3 bullets) every 2.0s.
- * 15 HP. Very slow straight drift movement.
+ * 60 HP. Very slow straight drift movement.
  */
 export class Overlord extends Enemy {
   /** Attack phase counter — even = ring burst, odd = aimed stream */

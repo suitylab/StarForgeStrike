@@ -1019,7 +1019,7 @@ export class Enemy {
 
 /**
  * Drone — small scout drone with 1 HP.
- * Fires 1 slow bullet straight down every 2 seconds.
+ * Kamikaze unit: does not fire bullets, but damages the player on body contact.
  * Drift speed: 1.5 units/second.
  */
 export class Drone extends Enemy {
@@ -1041,26 +1041,20 @@ export class Drone extends Enemy {
   }
 
   /**
-   * Fires 1 slow bullet straight down from the enemy position.
+   * Drone does not fire bullets — it is a kamikaze unit that damages
+   * the player on body contact (handled by Game.ts).
    *
    * @param bulletPool - The enemy bullet pool to spawn bullets from
    * @param playerPosition - The player's current position (unused for drone)
    */
   public fire(bulletPool: EnemyBulletPool, playerPosition: THREE.Vector3 | { x: number; y: number; z: number }): void {
-    if (this.fireCooldown > 0) return;
-
-    const bullet = bulletPool.get();
-    if (bullet) {
-      const pos = this.mesh.position;
-            bullet.spawn({ x: pos.x, y: pos.y - 0.4, z: pos.z }, 5 * this.bulletSpeedMultiplier);
-    }
-
+    // No-op: Drones deal damage via body collision instead of bullets.
     this.fireCooldown = this.fireRate;
   }
 }
 
 /**
- * Raider — medium fighter with 2 HP.
+ * Raider — medium fighter with 4 HP.
  * Fires 3 bullets in a fan spread (straight down, ±15°) every 1.5 seconds.
  * Drift speed: 2.5 units/second.
  */
@@ -1073,8 +1067,8 @@ export class Raider extends Enemy {
    */
     constructor(scene: THREE.Scene, id: number) {
     super(scene, id, 'raider');
-    this.maxHealth = 2;
-    this.health = 2;
+    this.maxHealth = 4;
+    this.health = 4;
     this.fireRate = 1.5;
     this.movementPattern = 'zigzag';
     this.patternAmplitude = 1.2;
@@ -1083,7 +1077,7 @@ export class Raider extends Enemy {
   }
 
   /**
-   * Fires 3 bullets in a fan spread: straight down, 15° left, 15° right.
+   * Fires 1 bullet straight down.
    *
    * @param bulletPool - The enemy bullet pool to spawn bullets from
    * @param playerPosition - The player's current position (unused for raider)
@@ -1093,26 +1087,11 @@ export class Raider extends Enemy {
 
         const pos = this.mesh.position;
     const speed = 7 * this.bulletSpeedMultiplier;
-    const spreadAngle = Math.PI / 12; // 15 degrees
 
     // Straight down
-    const bullet1 = bulletPool.get();
-    if (bullet1) {
-      bullet1.spawn({ x: pos.x, y: pos.y - 0.4, z: pos.z }, speed);
-    }
-
-    // 15 degrees left
-    const bullet2 = bulletPool.get();
-    if (bullet2) {
-      bullet2.spawn({ x: pos.x, y: pos.y - 0.4, z: pos.z }, speed);
-      bullet2.velocity.set(-Math.sin(spreadAngle) * speed, -Math.cos(spreadAngle) * speed, 0);
-    }
-
-    // 15 degrees right
-    const bullet3 = bulletPool.get();
-    if (bullet3) {
-      bullet3.spawn({ x: pos.x, y: pos.y - 0.4, z: pos.z }, speed);
-      bullet3.velocity.set(Math.sin(spreadAngle) * speed, -Math.cos(spreadAngle) * speed, 0);
+    const bullet = bulletPool.get();
+    if (bullet) {
+      bullet.spawn({ x: pos.x, y: pos.y - 0.4, z: pos.z }, speed);
     }
 
     this.fireCooldown = this.fireRate;
@@ -1120,7 +1099,7 @@ export class Raider extends Enemy {
 }
 
 /**
- * Sentry — hovering turret with 3 HP.
+ * Sentry — hovering turret with 6 HP.
  * Fires 2 bullets aimed at the player position (±5°) every 2.5 seconds.
  * Hovers in place once reaching target Y (y < 5).
  */
@@ -1133,8 +1112,8 @@ export class Sentry extends Enemy {
    */
     constructor(scene: THREE.Scene, id: number) {
     super(scene, id, 'sentry');
-    this.maxHealth = 3;
-    this.health = 3;
+    this.maxHealth = 6;
+    this.health = 6;
     this.fireRate = 2.5;
     this.movementPattern = 'hover';
     this.hoverTargetY = 4 + Math.random() * 2; // Random hover height between 4-6

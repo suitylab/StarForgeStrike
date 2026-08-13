@@ -126,6 +126,9 @@ export class Bullet {
    */
   public spawn(position: THREE.Vector3 | { x: number; y: number; z: number }, speed: number): void {
     this.mesh.position.set(position.x, position.y, position.z);
+    // Reset the scale so a recycled bullet doesn't retain a previous
+    // custom scale (e.g. TITAN/PULSER). Call setScale() after spawn() to override.
+    this.mesh.scale.set(1, 1, 1);
     this.speed = speed;
     // Bullets travel upward: +Y direction
     this.velocity.set(0, speed, 0);

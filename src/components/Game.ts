@@ -605,6 +605,7 @@ export class Game {
     this.updateBullets(delta);
     this.checkCollisions();
     this.checkEnemyBulletCollisions();
+    this.checkEnemyContactCollisions();
     this.updateCorridor(delta);
     this.updateLevelFlow(delta);
         this.updateBoss(delta);
@@ -1549,6 +1550,28 @@ export class Game {
     // Reset HUD score
     this.hud.reset();
 
+    // Spawn starting pickups for the retry, varying by level:
+    //   Level 1: no pickups
+    //   Level 2: 2 POWER + 1 random wingman
+    //   Level 3: 3 POWER + 3 random wingmen
+    // All drop from just above the top of the screen.
+    if (this.currentLevel >= 2) {
+      const powerCount = this.currentLevel === 2 ? 2 : 3;
+      const wingmanCount = this.currentLevel === 2 ? 1 : 3;
+      for (let i = 0; i < powerCount; i++) {
+        const x = (i - (powerCount - 1) / 2) * 2.5;
+        this.spawnPickup({ x, y: 9, z: 0 });
+      }
+      for (let i = 0; i < wingmanCount; i++) {
+        const x = (i - (wingmanCount - 1) / 2) * 2.5;
+        this.spawnWingmanPickup({ x, y: 9, z: 0 });
+      }
+    }
+
+    // Fire an all-directional celebratory burst from the player, matching
+    // the effect played when a level first starts.
+    this.fireCelebratoryBurst();
+
     // Restart the game loop
     this.state.running = true;
 
@@ -2164,6 +2187,75 @@ export class Game {
           // Only one missile can hit per frame
           break;
         }
+      }
+    }
+  }
+
+  /**
+   * Checks body-contact collisions between Drones and the player.
+   * Drones no longer fire bullets — instead they damage the player when
+   * they fly into the player, and are destroyed on impact.
+   */
+  private checkEnemyContactCollisions(): void {
+    // Skip if player is invincible or inactive
+    if (this.playerInvincibleTimer > 0) return;
+    if (!this.player.active) return;
+
+    const playerBounds = this.player.getBounds();
+
+    for (const enemy of this.enemies) {
+      if (!enemy.active) continue;
+      // Only Drones deal contact damage
+      if (enemy.type !== 'drone') continue;
+
+      if (boxIntersects(enemy.getBounds(), playerBounds)) {
+        // Damage the player
+        this.playerHealth--;
+        this.hud.setHealth(this.playerHealth);
+        this.playerInvincibleTimer = this.playerInvincibleDuration;
+        this.playerBlinkTimer = 0;
+
+        // Hit penalty: lose 1 POWER (wingmen are kept)
+        const contactPowerLevel = this.player.getPowerLevel();
+        this.player.setPowerLevel(contactPowerLevel - 1);
+        this.hud.setPowerLevel(this.player.getPowerLevel());
+
+        // Trigger large screen shake on player hit
+        this.triggerShake(0.5, 0.3);
+
+        // Play an explosion particle burst on the player's hull
+        const hitPos = this.player.mesh.position;
+        this.effectManager.spawnExplosion({
+          x: hitPos.x,
+          y: hitPos.y,
+          z: hitPos.z,
+        });
+
+        // Destroy the drone on impact
+        this.handleEnemyDestroyed(enemy);
+
+        // Check if the player is destroyed
+        if (this.playerHealth <= 0) {
+          // Stop player control
+          this.player.active = false;
+          this.player.mesh.visible = false;
+          // Pause gameplay
+          this.state.running = false;
+
+          // Trigger explosion at player position
+          const playerPos = this.player.mesh.position;
+          this.effectManager.spawnExplosion({
+            x: playerPos.x,
+            y: playerPos.y,
+            z: playerPos.z,
+          });
+
+          // Wait 3 seconds (while the explosion plays) before showing MISSION FAILED
+          this.deathDelayTimer = 3;
+        }
+
+        // Only one drone can hit per frame
+        break;
       }
     }
   }

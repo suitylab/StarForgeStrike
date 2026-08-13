@@ -284,12 +284,12 @@ export class Player {
   public fireCooldown: number;
   /** Time between shots in seconds */
   public fireRate: number;
-  /** Movement bounds — lower 60% of the -6..10 play field */
+  /** Movement bounds — the -6..10 play field with slightly relaxed vertical limits */
   public readonly bounds = {
     minX: -8,
     maxX: 8,
-    minY: -6,
-    maxY: 2.4,
+    minY: -6.5,
+    maxY: 4,
   };
 
     /** Total elapsed time for engine glow pulse animation */
