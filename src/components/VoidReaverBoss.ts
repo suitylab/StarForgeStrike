@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { EnemyBulletPool } from './EnemyBulletPool';
+import { HitFlash } from './HitFlash';
 
 /**
  * HomingMissile — an internal class for the VoidReaverBoss.
@@ -263,8 +264,9 @@ class HomingMissile {
  * 
  * Attack phases based on health thresholds:
  *   - Phase 1 (100-50% HP): Homing missile volleys (3-5 missiles every 3s)
- *   - Phase 2 (50-25% HP): Adds radial bullet bursts (8-12 bullets every 2s)
- *   - Phase 3 (25-0% HP): Alternating spiral and aimed patterns (every 1.5s)
+ *   - Phase 2 (50-25% HP): Alternates homing missiles and radial bursts (every 2s)
+ *   - Phase 3 (25-0% HP): Homing missiles on every attack (increased frequency),
+ *     alternating spiral and aimed patterns on top (every 1.5s)
  */
 export class VoidReaverBoss {
   /** The THREE.js group containing all boss geometry */
@@ -354,6 +356,9 @@ export class VoidReaverBoss {
   /** Whether this boss has been disposed */
   private isDisposed: boolean = false;
 
+  /** Flash-on-hit effect for the boss mesh */
+  private readonly hitFlash: HitFlash;
+
   /**
    * Creates a new VoidReaverBoss.
    * Builds all visual geometry and adds the mesh to the scene (hidden).
@@ -379,6 +384,7 @@ export class VoidReaverBoss {
     // Add to scene but keep hidden until spawned
     scene.add(this.mesh);
     this.mesh.visible = false;
+    this.hitFlash = new HitFlash(this.mesh);
   }
 
   /**
@@ -389,6 +395,7 @@ export class VoidReaverBoss {
    */
   public spawn(position: { x: number; y: number; z: number }): void {
     this.mesh.position.set(position.x, position.y, position.z);
+    this.hitFlash.reset();
     this.active = true;
     this.descending = true;
     this.health = this.maxHealth;
@@ -428,6 +435,9 @@ export class VoidReaverBoss {
     this.justFired = false;
     
     this.elapsedTime += delta;
+    
+    // Advance the hit flash effect
+    this.hitFlash.update(delta);
     
     // Handle movement
     if (this.descending) {
@@ -480,6 +490,7 @@ export class VoidReaverBoss {
   public takeDamage(amount: number): boolean {
     if (!this.active) return false;
     this.health -= amount;
+    this.hitFlash.trigger();
     return this.health <= 0;
   }
 
@@ -508,6 +519,7 @@ export class VoidReaverBoss {
     this.active = false;
     this.descending = false;
     this.mesh.visible = false;
+    this.hitFlash.reset();
     
     // Deactivate all missiles
     for (const missile of this.missiles) {
@@ -604,7 +616,9 @@ export class VoidReaverBoss {
         this.phase2Alternator = !this.phase2Alternator;
         break;
       case 3:
-        // Alternate between spiral and aimed patterns
+        // Missiles fire on EVERY attack (increased frequency in the later
+        // stage), alternating spiral and aimed bullet patterns on top.
+        this.fireHomingMissiles(bulletPool, playerPosition);
         if (this.phase3Alternator) {
           this.fireSpiral(bulletPool);
         } else {
@@ -623,7 +637,11 @@ export class VoidReaverBoss {
    * @param playerPosition - The player's current position
    */
   private fireHomingMissiles(bulletPool: EnemyBulletPool, playerPosition: { x: number; y: number; z: number }): void {
-    const missileCount = 3 + Math.floor(Math.random() * 3); // 3-5 missiles
+    // More missiles per volley in the later stages of the fight
+    const phase = this.getPhase();
+    const missileCount = phase === 3
+      ? 4 + Math.floor(Math.random() * 3) // 4-6 missiles in the final phase
+      : 3 + Math.floor(Math.random() * 3); // 3-5 missiles otherwise
     const pos = this.mesh.position;
     
     for (let i = 0; i < missileCount; i++) {

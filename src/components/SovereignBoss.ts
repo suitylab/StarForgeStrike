@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { EnemyBulletPool } from './EnemyBulletPool';
+import { HitFlash } from './HitFlash';
 
 /**
  * LaserBarrageShot — an internal class for the SovereignBoss.
@@ -323,6 +324,9 @@ export class SovereignBoss {
   /** Whether this boss has been disposed */
   private isDisposed: boolean = false;
 
+  /** Flash-on-hit effect for the boss mesh */
+  private readonly hitFlash: HitFlash;
+
   /**
    * Creates a new SovereignBoss.
    * Builds all visual geometry and adds the mesh to the scene (hidden).
@@ -353,6 +357,7 @@ export class SovereignBoss {
     // Add to scene but keep hidden until spawned
     scene.add(this.mesh);
     this.mesh.visible = false;
+    this.hitFlash = new HitFlash(this.mesh);
   }
 
   /**
@@ -363,6 +368,7 @@ export class SovereignBoss {
    */
   public spawn(position: { x: number; y: number; z: number }): void {
     this.mesh.position.set(position.x, position.y, position.z);
+    this.hitFlash.reset();
     this.active = true;
     this.descending = true;
     this.health = this.maxHealth;
@@ -412,6 +418,9 @@ export class SovereignBoss {
     this.justFired = false;
     
     this.elapsedTime += delta;
+    
+    // Advance the hit flash effect
+    this.hitFlash.update(delta);
     
     // Handle movement
     if (this.descending) {
@@ -477,6 +486,7 @@ export class SovereignBoss {
   public takeDamage(amount: number): boolean {
     if (!this.active) return false;
     this.health -= amount;
+    this.hitFlash.trigger();
     return this.health <= 0;
   }
 
@@ -507,6 +517,7 @@ export class SovereignBoss {
     this.active = false;
     this.descending = false;
     this.mesh.visible = false;
+    this.hitFlash.reset();
     
     // Deactivate all laser shots
     for (const shot of this.laserBarrageQueue) {
