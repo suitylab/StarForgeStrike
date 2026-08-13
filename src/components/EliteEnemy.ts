@@ -224,7 +224,7 @@ export class HomingMissile {
 
     // --- Rotation ---
     // Rotate missile to face movement direction
-    const angle = Math.atan2(this.velocity.x, this.velocity.y);
+    const angle = Math.atan2(-this.velocity.x, this.velocity.y);
     this.mesh.rotation.z = angle;
 
     // --- Trail Pulse ---
@@ -290,8 +290,8 @@ export class Reaper extends Enemy {
     this.mesh.visible = false;
 
     // Configure Reaper stats
-    this.maxHealth = 8;
-    this.health = 8;
+    this.maxHealth = 32;
+    this.health = 32;
     this.fireRate = 2.5;
     this.movementPattern = 'sine';
     this.patternAmplitude = 1.0;
@@ -373,8 +373,8 @@ export class Warden extends Enemy {
     this.mesh.visible = false;
 
     // Configure Warden stats
-    this.maxHealth = 12;
-    this.health = 12;
+    this.maxHealth = 48;
+    this.health = 48;
     this.fireRate = 2.0;
     this.movementPattern = 'straight';
   }
@@ -491,8 +491,8 @@ export class Harbinger extends Enemy {
     this.mesh.visible = false;
 
     // Configure Harbinger stats
-    this.maxHealth = 10;
-    this.health = 10;
+    this.maxHealth = 40;
+    this.health = 40;
     this.fireRate = 3.5;
     this.movementPattern = 'sine';
     this.patternAmplitude = 1.2;
@@ -620,8 +620,8 @@ export class Overlord extends Enemy {
     this.mesh.visible = false;
 
     // Configure Overlord stats
-    this.maxHealth = 15;
-    this.health = 15;
+    this.maxHealth = 60;
+    this.health = 60;
     this.fireRate = 2.0;
     this.movementPattern = 'straight';
   }

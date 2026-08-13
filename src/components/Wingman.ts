@@ -736,7 +736,7 @@ export class SeekerMissile {
 
     // --- Rotation ---
     // Rotate missile to face movement direction
-    const angle = Math.atan2(this.velocity.x, this.velocity.y);
+    const angle = Math.atan2(-this.velocity.x, this.velocity.y);
     this.mesh.rotation.z = angle;
 
     // --- Trail Pulse ---

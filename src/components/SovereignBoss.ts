@@ -216,10 +216,10 @@ export class SovereignBoss {
   public active: boolean = false;
   
 /** Current health points */
-  public health: number = 2500;
+  public health: number = 5000;
 
   /** Maximum health points */
-  public readonly maxHealth: number = 2500;
+  public readonly maxHealth: number = 5000;
   
   /** Time remaining before the next attack (seconds) */
   public fireCooldown: number = 0;

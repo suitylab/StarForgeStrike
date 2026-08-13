@@ -1667,6 +1667,10 @@ export class Game {
     this.enemiesSpawnedInWave = 0;
     this.currentWaveType = '';
 
+    // Dispose the previous level's boss so the next level spawns its own
+    this.boss?.dispose();
+    this.boss = null;
+
     // Reset player health to max
     this.playerHealth = this.maxPlayerHealth;
 
@@ -2101,6 +2105,63 @@ export class Game {
           }
 
           // Only one laser shot can hit per frame
+          break;
+        }
+      }
+    }
+
+    // Check VoidReaverBoss homing missiles for collision with the player
+    if (this.boss instanceof VoidReaverBoss && this.bossActive) {
+      const missiles = this.boss.getActiveMissiles();
+      for (const missile of missiles) {
+        if (!missile.active) continue;
+                if (boxIntersects(missile.getBounds(), playerBounds)) {
+          // Damage the player (same as enemy bullet hit)
+          this.playerHealth--;
+          this.hud.setHealth(this.playerHealth);
+          this.playerInvincibleTimer = this.playerInvincibleDuration;
+          this.playerBlinkTimer = 0;
+
+          // Hit penalty: lose 1 POWER (wingmen are kept)
+          const missilePowerLevel = this.player.getPowerLevel();
+          this.player.setPowerLevel(missilePowerLevel - 1);
+          this.hud.setPowerLevel(this.player.getPowerLevel());
+
+          // Trigger screen shake on missile impact
+          this.triggerShake(0.4, 0.25);
+
+          // Play an explosion particle burst on the player's hull
+          const missileHitPos = this.player.mesh.position;
+          this.effectManager.spawnExplosion({
+            x: missileHitPos.x,
+            y: missileHitPos.y,
+            z: missileHitPos.z,
+          });
+
+          // Destroy the missile on impact
+          missile.deactivate();
+
+          // Check if player is destroyed
+          if (this.playerHealth <= 0) {
+            // Stop player control
+            this.player.active = false;
+            this.player.mesh.visible = false;
+            // Pause gameplay
+            this.state.running = false;
+
+            // Trigger explosion at player position
+            const playerPos = this.player.mesh.position;
+            this.effectManager.spawnExplosion({
+              x: playerPos.x,
+              y: playerPos.y,
+              z: playerPos.z,
+            });
+
+            // Wait 3 seconds (while the explosion plays) before showing MISSION FAILED
+            this.deathDelayTimer = 3;
+          }
+
+          // Only one missile can hit per frame
           break;
         }
       }

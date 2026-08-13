@@ -21,10 +21,10 @@ export class IroncladBoss {
   public active: boolean = false;
   
   /** Current health points */
-  public health: number = 1000;
+  public health: number = 2000;
   
   /** Maximum health points */
-  public readonly maxHealth: number = 1000;
+  public readonly maxHealth: number = 2000;
   
   /** Time remaining before the next attack (seconds) */
   public fireCooldown: number = 0;

@@ -21,10 +21,22 @@ class HomingMissile {
   public lifetime: number = 5.0;
   
   /** Maximum speed of the missile (units per second) */
-  private readonly maxSpeed: number = 12;
+  private readonly maxSpeed: number = 9;
   
-  /** Steering strength — how quickly the missile turns toward the player */
-  private readonly steeringStrength: number = 3.0;
+  /** Turn rate limit — how fast the missile can rotate toward the player (radians per second) */
+  private readonly turnRate: number = 2.2;
+  
+  /** How long the missile actively homes on the player before steering fades (seconds) */
+  private readonly agilityTime: number = 1.6;
+  
+  /** How long homing fades to zero after the agility window (seconds) */
+  private readonly coastTime: number = 1.4;
+  
+  /** Acceleration toward max speed (seconds^-1) */
+  private readonly acceleration: number = 4.0;
+  
+  /** Age of the missile (seconds since spawn) */
+  private age: number = 0;
   
   /** Reference to the trail mesh for animation */
   private trail: THREE.Mesh;
@@ -106,6 +118,7 @@ class HomingMissile {
     this.velocity.copy(initialVelocity);
     this.active = true;
     this.lifetime = 5.0;
+    this.age = 0;
     this.pulseTime = 0;
     this.mesh.visible = true;
   }
@@ -121,6 +134,7 @@ class HomingMissile {
     
     this.pulseTime += delta;
     this.lifetime -= delta;
+    this.age += delta;
     
     // --- Steering behavior ---
     // Calculate direction to player
@@ -132,13 +146,47 @@ class HomingMissile {
     if (distance > 0.001) {
       // Desired direction (normalized)
       const desiredDir = new THREE.Vector3(dx / distance, dy / distance, dz / distance);
+      const speed = this.velocity.length();
       
-      // Steer velocity toward desired direction
-      this.velocity.lerp(desiredDir.multiplyScalar(this.maxSpeed), this.steeringStrength * delta);
+      // Homing intensity: full steering for the agility window, then fades out
+      // so the missile eventually flies straight and becomes dodgeable.
+      const fadingTime = this.age - this.agilityTime;
+      const homing = fadingTime < 0 ? 1 : Math.max(0, 1 - fadingTime / this.coastTime);
       
-      // Clamp velocity magnitude to max speed
-      if (this.velocity.length() > this.maxSpeed) {
-        this.velocity.normalize().multiplyScalar(this.maxSpeed);
+      if (homing > 0) {
+        if (speed > 0.001) {
+          // Limit the turn rate instead of snapping toward the player
+          const currentDir = this.velocity.clone().normalize();
+          const dot = THREE.MathUtils.clamp(currentDir.dot(desiredDir), -1, 1);
+          const angleBetween = Math.acos(dot);
+          const turn = Math.min(angleBetween, this.turnRate * homing * delta);
+          
+          if (turn < angleBetween - 0.0001 && angleBetween > 0.0001) {
+            const axis = new THREE.Vector3().crossVectors(currentDir, desiredDir);
+            if (axis.lengthSq() > 0.0001) {
+              axis.normalize();
+              currentDir.applyAxisAngle(axis, turn);
+            } else {
+              currentDir.copy(desiredDir);
+            }
+          } else {
+            currentDir.copy(desiredDir);
+          }
+          
+          // Accelerate toward max speed
+          const newSpeed = THREE.MathUtils.lerp(speed, this.maxSpeed, Math.min(1, this.acceleration * delta));
+          this.velocity.copy(currentDir.multiplyScalar(newSpeed));
+        } else {
+          // Launch: head toward the player at reduced initial speed
+          this.velocity.copy(desiredDir.multiplyScalar(this.maxSpeed * 0.5));
+        }
+      } else {
+        // Homing exhausted — continue on the current heading at max speed
+        if (speed > 0.001) {
+          const dir = this.velocity.clone().normalize();
+          const newSpeed = THREE.MathUtils.lerp(speed, this.maxSpeed, Math.min(1, this.acceleration * delta));
+          this.velocity.copy(dir.multiplyScalar(newSpeed));
+        }
       }
     }
     
@@ -147,7 +195,7 @@ class HomingMissile {
     
     // Rotate missile to face direction of travel
     if (this.velocity.length() > 0.1) {
-      const angle = Math.atan2(this.velocity.x, this.velocity.y);
+      const angle = Math.atan2(-this.velocity.x, this.velocity.y);
       this.mesh.rotation.z = angle;
     }
     
@@ -226,10 +274,10 @@ export class VoidReaverBoss {
   public active: boolean = false;
   
 /** Current health points */
-  public health: number = 1500;
+  public health: number = 3000;
 
   /** Maximum health points */
-  public readonly maxHealth: number = 1500;
+  public readonly maxHealth: number = 3000;
   
   /** Time remaining before the next attack (seconds) */
   public fireCooldown: number = 0;
