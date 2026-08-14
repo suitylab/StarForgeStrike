@@ -1373,6 +1373,9 @@ export class Game {
     // 1. Sacrifice the oldest acquired wingman
     this.player.removeOldestWingman();
 
+    // Refresh the HUD wingman indicator
+    this.hud.setWingmen(this.player.getWingmen());
+
     // 2. Clear all enemy bullets on screen
     this.enemyBulletPool.clear();
 
