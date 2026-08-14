@@ -117,9 +117,11 @@ export function buildPhantom(): THREE.Group {
     -1.4, -0.4, 0,
     -0.2, -0.4, 0,
     // Right wing triangle (extends right and sweeps back)
+    // Note: vertices ordered counter-clockwise so the front face (+Z)
+    // faces the camera with the default FrontSide material.
     0.2, 0.2, 0,
-    1.4, -0.4, 0,
     0.2, -0.4, 0,
+    1.4, -0.4, 0,
   ]);
   deltaWingGeometry.setAttribute('position', new THREE.BufferAttribute(wingVertices, 3));
   deltaWingGeometry.computeVertexNormals();
@@ -134,10 +136,10 @@ export function buildPhantom(): THREE.Group {
     -0.18, 0.18, -0.08,
     -1.35, -0.38, -0.08,
     -0.18, -0.38, -0.08,
-    // Right wing underside
+    // Right wing underside (counter-clockwise, facing +Z)
     0.18, 0.18, -0.08,
-    1.35, -0.38, -0.08,
     0.18, -0.38, -0.08,
+    1.35, -0.38, -0.08,
   ]);
   underWingGeometry.setAttribute('position', new THREE.BufferAttribute(underWingVertices, 3));
   underWingGeometry.computeVertexNormals();
