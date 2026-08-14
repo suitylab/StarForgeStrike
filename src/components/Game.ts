@@ -2687,7 +2687,7 @@ export class Game {
 
                               if (boxIntersects(missileBounds, enemy.getBounds())) {
             // Missile hits enemy — apply damage and destroy missile
-            const destroyed = enemy.takeDamage(2);
+            const destroyed = enemy.takeDamage(4);
 
             // Trigger hit flash effect
             enemy.flashHit();

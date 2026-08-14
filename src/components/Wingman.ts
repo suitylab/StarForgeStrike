@@ -590,8 +590,8 @@ export class SeekerMissile {
   public target: Enemy | null;
   /** Movement speed in units per second */
   public speed: number;
-  /** Steering strength toward the target */
-  public steeringStrength: number;
+  /** Maximum turn rate in radians per second (strong homing) */
+  public maxTurnRate: number;
   /** Total elapsed time for animations */
   public elapsedTime: number;
 
@@ -609,8 +609,8 @@ export class SeekerMissile {
     this.active = false;
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.target = null;
-    this.speed = 10;
-    this.steeringStrength = 3.0;
+    this.speed = 11;
+    this.maxTurnRate = 6.5; // ~372 deg/s — very agile homing
     this.elapsedTime = 0;
 
     // Build the missile mesh
@@ -629,12 +629,12 @@ export class SeekerMissile {
   private buildMissileMesh(): THREE.Group {
     const group = new THREE.Group();
 
-    // Missile body — small cone pointing upward
-    const bodyGeometry = new THREE.ConeGeometry(0.08, 0.25, 8);
+    // Missile body — cone pointing upward
+    const bodyGeometry = new THREE.ConeGeometry(0.13, 0.38, 8);
     const bodyMaterial = new THREE.MeshStandardMaterial({
       color: 0x00ff88,
       emissive: 0x00ff88,
-      emissiveIntensity: 0.6,
+      emissiveIntensity: 0.7,
       metalness: 0.3,
       roughness: 0.2,
     });
@@ -642,7 +642,7 @@ export class SeekerMissile {
     group.add(body);
 
     // Trail — elongated cone extending downward
-    const trailGeometry = new THREE.ConeGeometry(0.05, 0.4, 8);
+    const trailGeometry = new THREE.ConeGeometry(0.09, 0.6, 8);
     const trailMaterial = new THREE.MeshBasicMaterial({
       color: 0x00ff88,
       transparent: true,
@@ -651,7 +651,7 @@ export class SeekerMissile {
       depthWrite: false,
     });
     const trail = new THREE.Mesh(trailGeometry, trailMaterial);
-    trail.position.set(0, -0.3, 0);
+    trail.position.set(0, -0.4, 0);
     trail.rotation.x = Math.PI; // Point downward
     group.add(trail);
 
@@ -699,34 +699,21 @@ export class SeekerMissile {
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance > 0.001) {
-        // Desired direction toward target
-        const desiredX = dx / distance;
-        const desiredY = dy / distance;
+        // Strong turn-rate-limited homing: the missile turns toward the
+        // target's heading at up to maxTurnRate radians per second. This
+        // gives a much sharper, more reliable turn than proportional steering.
+        const currentAngle = Math.atan2(this.velocity.y, this.velocity.x);
+        const desiredAngle = Math.atan2(dy, dx);
 
-        // Current direction (normalized velocity)
-        const currentSpeed = Math.sqrt(
-          this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
-        );
-        const currentX = currentSpeed > 0 ? this.velocity.x / currentSpeed : 0;
-        const currentY = currentSpeed > 0 ? this.velocity.y / currentSpeed : 0;
+        let deltaAngle = desiredAngle - currentAngle;
+        while (deltaAngle > Math.PI) deltaAngle -= Math.PI * 2;
+        while (deltaAngle < -Math.PI) deltaAngle += Math.PI * 2;
 
-        // Steer toward target
-        const steerX = (desiredX - currentX) * this.steeringStrength * delta;
-        const steerY = (desiredY - currentY) * this.steeringStrength * delta;
+        const maxStep = this.maxTurnRate * delta;
+        const appliedAngle = currentAngle + Math.max(-maxStep, Math.min(maxStep, deltaAngle));
 
-        // Apply steering to velocity
-        this.velocity.x += steerX;
-        this.velocity.y += steerY;
-
-        // Clamp velocity to maintain speed
-        const newSpeed = Math.sqrt(
-          this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
-        );
-        if (newSpeed > 0) {
-          const scale = this.speed / newSpeed;
-          this.velocity.x *= scale;
-          this.velocity.y *= scale;
-        }
+        this.velocity.x = Math.cos(appliedAngle) * this.speed;
+        this.velocity.y = Math.sin(appliedAngle) * this.speed;
       }
     }
 
@@ -765,10 +752,10 @@ export class SeekerMissile {
    * @returns {THREE.Box3} The missile's bounding box in world space
    */
   public getBounds(): THREE.Box3 {
-    // Half-extents of the missile (0.16 wide, 0.5 tall, 0.16 deep)
-    const halfWidth = 0.08;
-    const halfHeight = 0.25;
-    const halfDepth = 0.08;
+    // Half-extents of the missile body (~0.28 wide, ~0.7 tall incl. trail)
+    const halfWidth = 0.14;
+    const halfHeight = 0.35;
+    const halfDepth = 0.14;
 
     const pos = this.mesh.position;
     return new THREE.Box3(
