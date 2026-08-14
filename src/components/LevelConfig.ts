@@ -286,13 +286,16 @@ export class LevelFlowManager {
 
   /**
    * Returns whether the boss warning banner should be shown.
-   * True when the current wave triggers the warning and it hasn't been shown yet.
+   * True when the current wave is the boss wave.
+   * (The trigger guard is handled by the Game timer, not by this flag —
+   * advanceWave() pre-flags bossWarningTriggered, which would otherwise
+   * prevent the warning from ever firing.)
    *
    * @returns {boolean} True if the boss warning should be shown
    */
   public shouldTriggerBossWarning(): boolean {
     const wave = this.getCurrentWave();
-    return wave.triggersBossWarning === true && !this.bossWarningTriggered;
+    return wave.triggersBossWarning === true;
   }
 
   /**

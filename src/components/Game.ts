@@ -1020,9 +1020,22 @@ export class Game {
       this.showBossWarning();
     }
 
-    // Check if the boss should be spawned
+    // Run the boss warning timer — when it expires, hide the banner
+    if (this.bossWarningTimer > 0) {
+      this.bossWarningTimer -= delta;
+      if (this.bossWarningTimer <= 0) {
+        this.bossWarningTimer = 0;
+        this.hideBossWarning();
+      }
+    }
+
+    // Check if the boss should be spawned — only after the warning finishes
     if (this.levelFlowManager.shouldSpawnBoss()) {
-      this.spawnBoss();
+      if (this.bossWarningTimer <= 0) {
+        this.spawnBoss();
+        return;
+      }
+      // Warning still playing — hold off on spawning enemies
       return;
     }
 
