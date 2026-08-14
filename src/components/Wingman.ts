@@ -47,7 +47,7 @@ export const WINGMAN_TYPE_DATA: Record<WingmanType, WingmanTypeData> = {
   barrage: {
     name: 'BARRAGE',
     color: '#ff2244',
-    description: 'Dense narrow cone of 5 shots',
+    description: 'Aimed dense cone of 5 shots at the nearest enemy',
   },
 };
 
@@ -946,7 +946,7 @@ export class FlareWingman extends Wingman {
 }
 
 /**
- * BarrageWingman — fires 5 bullets in a narrow cone.
+ * BarrageWingman — fires a dense cone of 5 bullets aimed at the nearest enemy.
  * Attack rate: 1.2s. Total spread of ~15 degrees. Red color.
  */
 export class BarrageWingman extends Wingman {
@@ -962,22 +962,51 @@ export class BarrageWingman extends Wingman {
   }
 
   /**
-   * Fires 5 bullets in a narrow cone (~15° total spread).
+   * Fires a narrow cone of 5 bullets aimed at the nearest enemy.
+   * If no enemy is on the field, holds fire and retries sooner.
    *
    * @param bulletPool - The bullet pool to spawn bullets from
-   * @param enemies - Array of active enemies (unused for barrage)
+   * @param enemies - Array of active enemies to aim at
    */
   public attack(bulletPool: BulletPool, enemies: Enemy[]): void {
     if (this.attackCooldown > 0) return;
 
+    // Find the nearest active enemy
+    let nearestEnemy: Enemy | null = null;
+    let nearestDistance = Infinity;
+
+    for (const enemy of enemies) {
+      if (!enemy.active) continue;
+
+      const dx = enemy.mesh.position.x - this.mesh.position.x;
+      const dy = enemy.mesh.position.y - this.mesh.position.y;
+      const distance = dx * dx + dy * dy;
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestEnemy = enemy;
+      }
+    }
+
+    // If no enemy found, don't fire
+    if (!nearestEnemy) {
+      this.attackCooldown = this.attackRate * 0.5; // Shorter cooldown when no target
+      return;
+    }
+
     const pos = this.mesh.position;
     const speed = 14;
-        const bulletCount: number = 5;
+    const bulletCount: number = 5;
     const totalSpread = Math.PI / 12; // 15 degrees total
+
+    // Aim the cone toward the nearest enemy
+    const dx = nearestEnemy.mesh.position.x - pos.x;
+    const dy = nearestEnemy.mesh.position.y - pos.y;
+    const baseAngle = Math.atan2(dx, dy); // angle 0 = straight up (+Y)
 
     for (let i = 0; i < bulletCount; i++) {
       const t = bulletCount === 1 ? 0 : i / (bulletCount - 1);
-      const angle = -totalSpread / 2 + t * totalSpread;
+      const angle = baseAngle - totalSpread / 2 + t * totalSpread;
 
       const bullet = bulletPool.get();
       if (bullet) {
