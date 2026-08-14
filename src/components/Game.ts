@@ -284,6 +284,10 @@ export class Game {
     /** Whether the boss has been defeated */
   private bossDefeated: boolean = false;
 
+  /** Global suppression timer — while > 0, enemies cannot fire new bullets.
+   *  Set by the PROTECT mechanic after sacrificing a wingman. */
+  private enemyFireSuppressionTimer: number = 0;
+
   /** Whether the game is currently paused */
   private paused: boolean = false;
 
@@ -581,6 +585,11 @@ export class Game {
     }
     // when the tab is backgrounded or on slow frames
     this.state.elapsedTime += delta;
+
+    // Decrement the enemy fire suppression timer (PROTECT mechanic)
+    if (this.enemyFireSuppressionTimer > 0) {
+      this.enemyFireSuppressionTimer = Math.max(0, this.enemyFireSuppressionTimer - delta);
+    }
 
             // Update all game systems
     this.updatePlayer(delta);
@@ -894,14 +903,14 @@ export class Game {
     // Title
     const title = document.createElement('span');
     title.className = 'warning-title';
-    title.textContent = 'WARNING: HEAVY HOSTILE DETECTED';
+    title.textContent = 'WARNING';
     banner.appendChild(title);
 
     // Subtitle
     const subtitle = document.createElement('span');
     subtitle.className = 'warning-subtitle';
                 const levelName = level === 1 ? 'LEVEL 1' : level === 2 ? 'LEVEL 2' : 'LEVEL 3';
-    subtitle.textContent = `CLASSIFIED THREAT — ${levelName}`;
+    subtitle.textContent = `HEAVY HOSTILE DETECTED — ${levelName}`;
     banner.appendChild(subtitle);
 
     // Append to document body
@@ -980,7 +989,7 @@ export class Game {
     // Update the boss warning subtitle with the current level
     const subtitle = this.bossWarningElement?.querySelector('.warning-subtitle');
     if (subtitle) {
-      subtitle.textContent = `CLASSIFIED THREAT — LEVEL ${this.currentLevel}`;
+      subtitle.textContent = `HEAVY HOSTILE DETECTED — LEVEL ${this.currentLevel}`;
     }
 
     this.bossActive = true;
@@ -1043,6 +1052,13 @@ export class Game {
    */
   private updateBoss(delta: number): void {
     if (!this.boss || !this.bossActive) return;
+
+    // Suppress boss attacks while the PROTECT suppression timer is active:
+    // keep a small positive cooldown so the boss's internal fire check
+    // never reaches zero during the 1s window.
+    if (this.enemyFireSuppressionTimer > 0 && this.boss.fireCooldown > 0) {
+      this.boss.fireCooldown = Math.max(this.boss.fireCooldown, 0.05);
+    }
 
         // Update the boss
     this.boss.update(delta, this.enemyBulletPool, this.player.mesh.position);
@@ -1339,6 +1355,47 @@ export class Game {
       (particle.material as THREE.Material).dispose();
     }
     this.entranceTrailParticles = [];
+  }
+
+  /**
+   * PROTECT — the defensive core mechanic.
+   * Sacrifices the oldest acquired wingman, clears every enemy bullet on
+   * screen (including active boss projectiles), and detonates an
+   * all-directional celebratory burst from the player.
+   *
+   * @returns {boolean} True if the protect was executed, false if no wingman
+   *                    was available to sacrifice (or the game is paused).
+   */
+  public performProtect(): boolean {
+    if (!this.state.running || this.paused) return false;
+    if (this.player.getWingmanCount() === 0) return false;
+
+    // 1. Sacrifice the oldest acquired wingman
+    this.player.removeOldestWingman();
+
+    // 2. Clear all enemy bullets on screen
+    this.enemyBulletPool.clear();
+
+    // Clear active boss projectiles as well (homing missiles / laser barrage)
+    if (this.boss) {
+      if (this.boss instanceof VoidReaverBoss) {
+        for (const missile of this.boss.getActiveMissiles()) {
+          missile.deactivate();
+        }
+      } else if (this.boss instanceof SovereignBoss) {
+        for (const shot of this.boss.getActiveLaserShots()) {
+          shot.deactivate();
+        }
+      }
+    }
+
+    // 3. Fire an all-directional celebratory burst from the player
+    this.fireCelebratoryBurst();
+
+    // 4. Enemies cannot fire new bullets for 1 second
+    this.enemyFireSuppressionTimer = 1.0;
+
+    return true;
   }
 
   /**
@@ -1854,8 +1911,8 @@ export class Game {
 
       enemy.update(delta);
 
-      // Handle enemy firing
-      if (enemy.fireCooldown <= 0) {
+      // Handle enemy firing (suppressed for 1s after a PROTECT)
+      if (enemy.fireCooldown <= 0 && this.enemyFireSuppressionTimer <= 0) {
         enemy.fire(this.enemyBulletPool, this.player.mesh.position);
       }
 
@@ -2823,6 +2880,11 @@ export class Game {
    */
   private handleKeyDown = (event: KeyboardEvent): void => {
     this.keys[event.code] = true;
+
+    // PROTECT (Space): sacrifice the oldest wingman to clear enemy bullets
+    if (event.code === 'Space' && !event.repeat && this.state.running && !this.paused) {
+      this.performProtect();
+    }
   };
 
   /**

@@ -659,6 +659,7 @@ export class UIManager {
       'A / D — Move Left / Right',
       'W / S — Move Up / Down',
       'Auto-Fire — Weapons fire automatically',
+      'SPACE — PROTECT: sacrifice oldest wingman to clear enemy bullets',
       'ESC / P — Pause game',
     ];
 

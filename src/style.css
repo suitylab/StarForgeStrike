@@ -663,9 +663,9 @@ body::before {
 
 #boss-warning-banner {
   position: fixed;
-  top: 80px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   z-index: 200;
   display: none;
   flex-direction: column;
@@ -691,18 +691,18 @@ body::before {
 /* Slide-in from top animation */
 @keyframes bannerSlideIn {
   0% {
-    transform: translateX(-50%) translateY(-120px);
+    transform: translate(-50%, calc(-50% - 120px));
     opacity: 0;
   }
   60% {
-    transform: translateX(-50%) translateY(10px);
+    transform: translate(-50%, calc(-50% + 10px));
     opacity: 1;
   }
   80% {
-    transform: translateX(-50%) translateY(-5px);
+    transform: translate(-50%, calc(-50% - 5px));
   }
   100% {
-    transform: translateX(-50%) translateY(0);
+    transform: translate(-50%, -50%);
     opacity: 1;
   }
 }
@@ -858,11 +858,11 @@ body::before {
 
 @keyframes bannerSlideOut {
   0% {
-    transform: translateX(-50%) translateY(0);
+    transform: translate(-50%, -50%);
     opacity: 1;
   }
   100% {
-    transform: translateX(-50%) translateY(-120px);
+    transform: translate(-50%, calc(-50% - 120px));
     opacity: 0;
   }
 }
@@ -872,9 +872,9 @@ body::before {
 }
 
 #boss-warning-banner .warning-title {
-  font-size: 22px;
+  font-size: 48px;
   font-weight: 900;
-  letter-spacing: 6px;
+  letter-spacing: 14px;
   text-transform: uppercase;
   color: #ff0000;
   text-shadow:
@@ -901,10 +901,10 @@ body::before {
 }
 
 #boss-warning-banner .warning-subtitle {
-  font-size: 12px;
-  letter-spacing: 4px;
+  font-size: 14px;
+  letter-spacing: 5px;
   text-transform: uppercase;
-  color: rgba(255, 100, 100, 0.8);
+  color: rgba(255, 100, 100, 0.9);
   text-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
   margin: 0;
 }
@@ -975,8 +975,8 @@ body::before {
   }
 
   #boss-warning-banner .warning-title {
-    font-size: 16px;
-    letter-spacing: 4px;
+    font-size: 24px;
+    letter-spacing: 8px;
   }
 }
 
